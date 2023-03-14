@@ -1,0 +1,137 @@
+---
+title: "NYPD Shooting Incident Report"
+output: pdf_document
+date: "2022-10-12"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Source of Data
+The report used the data set of every shooting incident that occurred in NYC going back to 2006 through the end of the previous calendar year.
+
+This is a breakdown of every shooting incident that occurred in NYC going back to 2006 through the end of the previous calendar year. This data is manually extracted every quarter and reviewed by the Office of Management Analysis and Planning before being posted on the NYPD website. Each record represents a shooting incident in NYC and includes information about the event, the location and time of occurrence. In addition, information related to suspect and victim demographics is also included. This data can be used by the public to explore the nature of shooting/criminal activity. Please refer to the attached data footnotes for additional information about this dataset.
+
+The source of the data can be downloaded here: https://data.cityofnewyork.us/api/views/833y-fsy8/rows.csv?accessType=DOWNLOAD
+
+
+# Import libraries
+
+```{r lib}
+library(tidyverse)
+library(lubridate)
+```
+
+# Import Data
+Import the data in a reproducible way that can be downloaded from the internet.
+
+```{r importdata}
+nypd.data = read_csv("https://data.cityofnewyork.us/api/views/833y-fsy8/rows.csv?accessType=DOWNLOAD")
+```
+
+# Data Cleansing
+
+Remove unnecessary columns and convert OCCUR_DATE to date data type
+
+```{r cleansing}
+nypd.data <- nypd.data %>% mutate(OCCUR_DATE = mdy(OCCUR_DATE)) %>%
+            select(-c(INCIDENT_KEY, JURISDICTION_CODE, X_COORD_CD,	Y_COORD_CD,	Latitude,	Longitude,	Lon_Lat)) %>%
+            mutate(OCCUR_DATE = as_date(OCCUR_DATE, format="%m/%d/%Y")) 
+summary(nypd.data)
+```
+
+There is no missing data.
+
+# Data  Visualization
+Find out the trend of shooting incident by month and by year
+```{r visualize1}
+
+incident_by_month <- nypd.data %>%
+  group_by(MONTH = floor_date(OCCUR_DATE, 'month')) %>%
+  summarize(INCIDENT_COUNT = n()) %>%
+  select(MONTH, INCIDENT_COUNT) %>%
+  ungroup
+
+#plot graph
+incident_by_month %>%
+  ggplot(aes(x = MONTH, y = INCIDENT_COUNT)) +
+    geom_line(aes(color = "INCIDENT_COUNT")) +
+    geom_point(aes(color = "INCIDENT_COUNT")) +
+    theme(legend.position = "bottom",
+          axis.text.x = element_text(angle= 90)) +
+    labs(title = "NYPD Shooting Incident Report By Month", y = NULL)
+
+incident_by_year <- nypd.data %>%
+  group_by(YEAR = floor_date(OCCUR_DATE, 'year')) %>%
+  summarize(INCIDENT_COUNT = n()) %>%
+  select(YEAR, INCIDENT_COUNT) %>%
+  ungroup
+
+#plot graph
+incident_by_year %>%
+  ggplot(aes(x = YEAR, y = INCIDENT_COUNT)) +
+    geom_line(aes(color = "INCIDENT_COUNT")) +
+    geom_point(aes(color = "INCIDENT_COUNT")) +
+    theme(legend.position = "bottom",
+          axis.text.x = element_text(angle= 90)) +
+    labs(title = "NYPD Shooting Incident Report By Year", y = NULL)
+
+
+```
+
+
+# Data Analysis
+What are the race involved in the shooting incident data?
+```{r analysis1}
+unique(nypd.data$VIC_RACE)
+
+```
+
+What are the # of shooting incident for each race per year?
+```{r analysis2}
+nypd_by_race <- nypd.data %>% 
+  group_by(YEAR = floor_date(OCCUR_DATE, 'year')) %>%
+  summarize(BLACK = sum(VIC_RACE == 'BLACK'),
+            ASIAN_PACIFIC_ISLANDER = sum(VIC_RACE == 'ASIAN / PACIFIC ISLANDER'),
+            BLACK_HISPANIC = sum(VIC_RACE == 'BLACK HISPANIC'),
+            WHITE_HISPANIC = sum(VIC_RACE == 'WHITE HISPANIC'),
+            WHITE = sum(VIC_RACE == 'WHITE'),
+            AMERICAN_INDIAN_ALASKAN_NATIVE = sum(VIC_RACE == 'AMERICAN INDIAN/ALASKAN NATIVE'),
+            UNKNOWN = sum(VIC_RACE == 'UNKNOWN'))
+
+summary(nypd_by_race)
+
+#plot graph
+nypd_by_race %>%
+  ggplot(aes(x = YEAR, y = BLACK)) +
+    geom_line(aes(color = "BLACK")) +
+    geom_point(aes(color = "BLACK")) +
+    geom_line(aes(y=ASIAN_PACIFIC_ISLANDER, color = "ASIAN / PACIFIC ISLANDER")) +
+    geom_point(aes(y=ASIAN_PACIFIC_ISLANDER, color = "ASIAN / PACIFIC ISLANDER")) +
+    geom_line(aes(y=BLACK_HISPANIC, color = "BLACK HISPANIC")) +
+    geom_point(aes(y=BLACK_HISPANIC, color = "BLACK HISPANIC")) +
+    geom_line(aes(y=WHITE_HISPANIC, color = "WHITE HISPANIC")) +
+    geom_point(aes(y=WHITE_HISPANIC, color = "WHITE HISPANIC")) +
+    geom_line(aes(y=WHITE, color = "WHITE")) +
+    geom_point(aes(y=WHITE, color = "WHITE")) +
+    geom_line(aes(y=AMERICAN_INDIAN_ALASKAN_NATIVE, color = "AMERICAN INDIAN/ALASKAN NATIVE")) +
+    geom_point(aes(y=AMERICAN_INDIAN_ALASKAN_NATIVE, color = "AMERICAN INDIAN/ALASKAN NATIVE")) +
+    geom_line(aes(y=UNKNOWN, color = "UNKNOWN")) +
+    geom_point(aes(y=UNKNOWN, color = "UNKNOWN")) +  
+    theme(legend.position = "bottom",
+          axis.text.x = element_text(angle= 90)) +
+    labs(title = "NYPD Shooting Incident Report By Race", y = NULL)
+
+```
+
+# Conclusion
+As a conclusion, the trend of the shooting incidents has decreased from 2006 to 2019. However, there is a sharp increase in 2020. More data is needed to find out the reason why there is such a sharp increase. 
+
+# Bias Identification
+It seems that Black people has significantly more shooting incidents as per the data set. However, we cannot draw any conclusion at this point, because the result could be affected by many factors such as population demographic etc. This could be just a biased conclusion. We should further investigate this result before jumping into a conclusion.
+
+
+
+
+
