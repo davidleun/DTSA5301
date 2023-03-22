@@ -211,7 +211,7 @@ US_by_state %>%
 
 US_state_totals <- US_by_state %>%
   group_by(Province_State) %>%
-  summarize(deaths = max(deaths), cases = max(cases), population = max(Population),
+  summarize(deaths = sum(deaths), cases = sum(cases), population = sum(Population),
             cases_per_thou = 1000 * cases / population,
             deaths_per_thou = 1000 * deaths / population) %>%
   filter(cases > 0, population > 0)
@@ -233,25 +233,26 @@ US_state_totals %>%
 
 # Modeling
 ```{r modeldata, echo=TRUE, eval=TRUE}
-mod <- lm(deaths_per_thou ~ cases_per_thou, data = US_state_totals)
+#mod <- lm(deaths_per_thou ~ cases_per_thou, data = US_state_totals)
+mod <- lm(cases ~ date, data = global)
 summary(mod)
 
-US_state_totals %>% slice_min(cases_per_thou)
+#US_state_totals %>% slice_min(cases_per_thou)
 
-US_state_totals %>% slice_max(cases_per_thou)
+#US_state_totals %>% slice_max(cases_per_thou)
 
-x_grid <-seq(1, 151)
+#x_grid <-seq(1, 151)
 
-new_df <- tibble(cases_per_thou = x_grid)
+#new_df <- tibble(cases_per_thou = x_grid)
 
-US_state_totals %>% mutate(pred = predict(mod))
+#US_state_totals %>% mutate(pred = predict(mod))
 
-US_tot_w_pred <- US_state_totals %>% mutate(pred = predict(mod))
-US_tot_w_pred
+#US_tot_w_pred <- US_state_totals %>% mutate(pred = predict(mod))
+#US_tot_w_pred
 
-US_tot_w_pred %>% ggplot() +
-  geom_point(aes(x = cases_per_thou, y = deaths_per_thou), color = "blue") +
-  geom_point(aes(x = cases_per_thou, y = pred), color = "red")
+#US_tot_w_pred %>% ggplot() +
+#  geom_point(aes(x = cases_per_thou, y = deaths_per_thou), color = "blue") +
+#  geom_point(aes(x = cases_per_thou, y = pred), color = "red")
 
 ```
 
